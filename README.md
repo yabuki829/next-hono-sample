@@ -11,7 +11,44 @@ npx create-next-app hono-next --typescript
 npm install hono
 ```
 
-## route.tsを作成
+## APIを作成
+### 1. handerの作成
+```
+src/api/status/hander.ts
+```
+```
+import { Context } from 'hono'
+export class StatusHandler {
+  static getStatus(c: Context) {
+    return c.json({ message: "ok" });
+  }
+}
+```
+
+### 2. routersの作成
+
+```
+src/api/routers.ts
+```
+```
+import { Hono } from 'hono'
+import { StatusHandler, BooksHandler } from './handers'
+
+export const routers = new Hono()
+/**
+ * [Status]
+ */
+// helth check
+routers.get('/status', (c) => StatusHandler.getStatus(c))
+
+/**
+ * [Books]
+ */
+routers.get('/books', (c) => BooksHandler.getBooks(c))
+routers.get('/books/:id', (c) => BooksHandler.getBookById(c))
+```
+
+
 ```
 src/app/api/[...route]/route.ts
 ```
@@ -19,31 +56,13 @@ src/app/api/[...route]/route.ts
 ```
 import { Hono } from 'hono'
 import { handle } from 'hono/vercel'
+import { routers } from '@/api/routers'
 
-// Next.js に最適化されたランタイムを利用
-export const runtime = 'edge'
+const app = new Hono().basePath('/api')
 
-const app = new Hono()
+app.route('/', routers)
 
-// ルート例
-app.get('/', (c) => {
-  return c.json({ message: 'Hello from Hono + Next.js API Route!' })
-})
 
-// パラメータ例
-app.get('/hello/:name', (c) => {
-  const name = c.req.param('name')
-  return c.json({ message: `Hello, ${name}!` })
-})
-
-// POST例
-app.post('/echo', async (c) => {
-  const body = await c.req.json()
-  return c.json({ youSent: body })
-})
-
-// ルーティングを Next.js にブリッジ
 export const GET = handle(app)
 export const POST = handle(app)
-
 ```
