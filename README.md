@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Next.js + Hono Application
 
-## Getting Started
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## プロジェクトを作成
+```
+npx create-next-app hono-next --typescript 
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Honoをインストール
+```
+npm install hono
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## route.tsを作成
+```
+src/app/api/[...route]/route.ts
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+import { Hono } from 'hono'
+import { handle } from 'hono/vercel'
 
-## Learn More
+// Next.js に最適化されたランタイムを利用
+export const runtime = 'edge'
 
-To learn more about Next.js, take a look at the following resources:
+const app = new Hono()
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+// ルート例
+app.get('/', (c) => {
+  return c.json({ message: 'Hello from Hono + Next.js API Route!' })
+})
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+// パラメータ例
+app.get('/hello/:name', (c) => {
+  const name = c.req.param('name')
+  return c.json({ message: `Hello, ${name}!` })
+})
 
-## Deploy on Vercel
+// POST例
+app.post('/echo', async (c) => {
+  const body = await c.req.json()
+  return c.json({ youSent: body })
+})
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+// ルーティングを Next.js にブリッジ
+export const GET = handle(app)
+export const POST = handle(app)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
